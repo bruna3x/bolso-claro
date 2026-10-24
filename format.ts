@@ -1,0 +1,12 @@
+export const money = (cents: number, hidden = false): string => hidden ? 'R$ ••••••' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format((cents || 0) / 100);
+export const numberMoney = (value: number): string => money(Math.round((value || 0) * 100));
+export const shortMoney = (cents: number, hidden = false): string => hidden ? '••••' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: Math.abs(cents) >= 100000000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format((cents || 0) / 100);
+export const formatDate = (iso?: string): string => iso ? new Intl.DateTimeFormat('pt-BR').format(new Date(`${iso.slice(0, 10)}T12:00:00`)) : '—';
+export const todayISO = (): string => new Date().toLocaleDateString('en-CA');
+export const monthKey = (date = new Date()): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+export const monthLabel = (month: string): string => { const [year, m] = month.split('-').map(Number); return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date(year, m - 1, 1)); };
+export const addMonthsKey = (month: string, delta: number): string => { const [y, m] = month.split('-').map(Number); const d = new Date(y, m - 1 + delta, 1); return monthKey(d); };
+export const newId = (): string => globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+export const safeDay = (day: number, year: number, monthIndex: number): number => Math.min(Math.max(1, day), new Date(year, monthIndex + 1, 0).getDate());
+export const daysUntil = (iso: string): number => Math.ceil((new Date(`${iso}T12:00:00`).getTime() - new Date(`${todayISO()}T12:00:00`).getTime()) / 86_400_000);
+export const percent = (part: number, whole: number): number => whole > 0 ? Math.round(part * 100 / whole) : 0;

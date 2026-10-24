@@ -1,0 +1,91 @@
+Crie um aplicativo web de finanças pessoais completo: single-page, responsivo (desktop e celular), em português do Brasil, moeda R$ (formato 1.234,56), datas dd/mm/aaaa. Todos os dados ficam no navegador (IndexedDB), sem backend e sem login. Deve funcionar offline e ser instalável como PWA (manifest + service worker + ícone na tela inicial do celular).
+
+1. CONTAS, CARTEIRA E CARTÕES
+
+Contas: cadastro com nome, tipo (conta corrente, poupança, carteira/dinheiro físico, investimento, vale-alimentação/refeição), saldo inicial, cor, ícone e opção de “incluir no saldo total” (para esconder, por exemplo, o vale-refeição do saldo geral). Permitir arquivar conta sem apagar o histórico.
+
+Cartões de crédito: nome, bandeira, limite total, dia de fechamento, dia de vencimento, conta vinculada para pagar a fatura, cor. O app deve:
+
+Agrupar automaticamente as compras em faturas mensais conforme o período de fechamento (compra após o fechamento cai na fatura seguinte).
+Mostrar cada fatura com status aberta / fechada / paga / paga parcialmente, valor total, limite disponível e lista de compras.
+Ter botão “Pagar fatura” que gera uma saída na conta vinculada e marca a fatura como paga; permitir pagamento parcial.
+Mostrar na tela do cartão o compromisso futuro: soma das parcelas que ainda vão cair nas próximas faturas.
+
+Transferências entre contas: lançamento de origem → destino, não conta como receita nem despesa nos relatórios.
+
+Ajuste de saldo: botão para corrigir o saldo real de uma conta criando um lançamento de ajuste automaticamente.
+
+2. LANÇAMENTOS (RECEITAS E DESPESAS)
+
+Campos: tipo (receita/despesa), valor, data, categoria, subcategoria, descrição, conta ou cartão, forma de pagamento (dinheiro, Pix, débito, crédito, boleto, transferência, vale), tags livres, observações, anexo de comprovante (foto ou PDF armazenado localmente, com visualização), e status pago / pendente com data de vencimento.
+
+Despesas parceladas: eu informo valor total ou valor da parcela, número de parcelas e data da primeira. O app gera todas as parcelas (exibindo “3/12”), vincula ao cartão ou conta, e permite: editar só uma parcela, editar todas as restantes, antecipar/quitar parcelas, excluir uma ou todas.
+
+Lançamentos recorrentes (gastos e receitas fixas): cadastro de itens que se repetem automaticamente, com nome, valor, categoria, conta/cartão, forma de pagamento, frequência (semanal, quinzenal, mensal, bimestral, trimestral, semestral, anual), dia de vencimento, data de início e fim opcional. Exemplos que devem funcionar bem: plano de saúde, salário, aluguel, condomínio, internet, celular, energia, água, academia, streaming, seguro do carro, IPVA/IPTU anual, mensalidade de curso. O app deve:
+
+Gerar automaticamente os lançamentos pendentes de cada mês.
+Permitir valor variável: ao chegar o mês, eu confirmo o valor real (ex.: conta de luz) antes de marcar como pago.
+Ter uma tela “Recorrentes” listando tudo com valor mensal total, próximo vencimento, pausar/retomar e histórico.
+Alertar se o valor confirmado ficou acima da média dos últimos 6 meses.
+
+Dívidas: módulo próprio para dívidas e empréstimos (financiamento, empréstimo pessoal, consignado, cheque especial, dívida negociada, dinheiro devido a alguém), com credor, valor original, saldo devedor atual, taxa de juros mensal, número de parcelas, parcelas pagas/restantes, valor da parcela, dia de vencimento e data prevista de quitação. Mostrar barra de progresso de quitação, total já pago, total de juros pagos, e gerar automaticamente a parcela do mês como despesa recorrente. Incluir painel “Dívidas” com total devido, comprometimento mensal da renda (%) e ordem sugerida de quitação (maior juros primeiro ou menor saldo primeiro — eu escolho).
+
+Divisão de gastos e reembolsos: em qualquer despesa, posso marcar “dividida” e informar com quem e o valor que cada pessoa deve me devolver; o app cria um “a receber” vinculado e, quando recebo, lança a entrada e abate. Módulo Reembolsos a receber separado para adiantamentos, diárias e despesas de trabalho: lanço o gasto, marco “reembolsável”, e acompanho pendente/recebido com data prevista. Reembolso recebido não deve inflar as receitas nos relatórios — deve zerar a despesa original.
+
+Busca e filtros: por período, conta, cartão, categoria, subcategoria, forma de pagamento, tag, status, valor mínimo/máximo e texto da descrição. Salvar filtros favoritos.
+
+Categorias: vir pré-carregadas (Moradia, Alimentação, Restaurantes, Transporte, Saúde, Educação, Lazer, Vestuário, Assinaturas, Pets, Presentes, Impostos, Investimentos, Dívidas, Outros; receitas: Salário, Extra, Reembolso, Rendimentos, Outros), todas editáveis, com subcategorias, cor e ícone.
+
+3. ORÇAMENTO E PLANEJAMENTO
+
+Orçamento mensal por categoria (e opcionalmente por subcategoria), com botão “copiar do mês anterior” e sugestão automática baseada na média dos últimos 3 meses.
+Mostrar por categoria: orçado, gasto, restante, % consumido e ritmo (“faltam 12 dias e você já usou 90%”).
+Alertas visuais em 80% e 100%; indicador de quanto posso gastar por dia até o fim do mês em cada categoria.
+Planejamento de gastos futuros: lançar gastos previstos em qualquer mês à frente (viagem, matrícula, presente, manutenção do carro) com valor estimado; aparecem na projeção e, quando o mês chega, posso converter em lançamento real.
+Projeção de saldo mês a mês (12 meses) considerando saldo atual + recorrentes + parcelas + faturas + dívidas + planejados + aportes de metas, com destaque em vermelho para meses em que o saldo fica negativo.
+Simulador “e se”: inserir cortes ou aumentos hipotéticos (ex.: cortar R$ 300 de Restaurantes, receber aumento de R$ 500) e ver o impacto na projeção e nas metas sem alterar os dados reais.
+
+4. METAS
+
+Cada meta com: nome, ícone, valor-alvo, valor acumulado, barra de progresso em %, prazo, conta vinculada (onde o dinheiro está guardado), prioridade e histórico de aportes (data e valor). O app deve:
+
+Calcular quanto preciso guardar por mês para cumprir o prazo e mostrar se estou no ritmo, adiantada ou atrasada (com quantos meses de atraso).
+Permitir aporte rápido a partir do dashboard e aporte automático recorrente.
+Permitir resgate (retirar dinheiro da meta).
+Tipos de meta: juntar dinheiro, quitar dívida (vinculada ao módulo Dívidas), reserva de emergência (com sugestão de 6x os gastos fixos mensais).
+Simulador na meta: “se eu guardar R$ X por mês, quando atinjo?” e “se quero atingir em N meses, quanto preciso por mês?”.
+
+5. PAINEL (DASHBOARD)
+
+Seletor de mês no topo. Cards de resumo do mês: Entradas / Saídas / Guardado (aportes em metas) / A pagar (pendentes + fatura em aberto + parcelas do mês) / Gastos por categoria, saldo total, saldo por conta, limite disponível por cartão e a receber (divisões e reembolsos).
+
+Gráficos:
+
+Pizza/rosca de gastos por categoria e barras de gasto vs. orçamento.
+Tendência mês a mês (receita, despesa, saldo) dos últimos 12 meses.
+Linha de projeção de saldo futuro.
+Comparativo “este mês vs. média dos últimos 3 e 6 meses” por categoria, mostrando variação em % e R$.
+Patrimônio líquido = soma de contas e investimentos − faturas em aberto − saldo devedor de dívidas, com gráfico de evolução mensal e registro automático de um snapshot no fim de cada mês.
+Gastos por forma de pagamento e por cartão.
+
+Insights em linguagem simples, gerados automaticamente, por exemplo: “Restaurantes está 32% acima do orçamento”, “Você gastou 18% menos com transporte que no mês passado”, “No ritmo atual, a meta Viagem atrasa 2 meses”, “Seu plano de saúde subiu 11% em relação ao ano passado”, “Suas dívidas consomem 27% da sua renda”, “Em março seu saldo projetado fica negativo por causa do IPVA — considere planejar R$ 200/mês desde agora”.
+
+Calendário financeiro: visão mensal com, por dia, vencimentos de contas, parcelas, faturas, recorrentes, dívidas e aportes previstos; cor por status (pago, pendente, atrasado); clicar no dia abre os itens e permite marcar como pago. Lista “próximos 7 dias” no dashboard.
+
+6. IMPORTAÇÃO E EXPORTAÇÃO
+
+Importar CSV/OFX de extratos bancários e faturas de cartão com tela de mapeamento de colunas (escolho qual coluna é data, valor, descrição; aceitar formatos de data e separadores diferentes), pré-visualização e detecção de duplicados (mesma data, valor e descrição).
+Regras de categorização automática: “se a descrição contém X → categoria Y / forma de pagamento Z”; o app sugere regras a partir do que eu categorizo manualmente e aplica nas próximas importações. Exemplos: “IFOOD” → Restaurantes, “UBER” → Transporte, “UNIMED” → Saúde.
+Exportar CSV de lançamentos filtrados e relatórios em PDF (resumo do mês).
+Backup completo em JSON (contas, cartões, lançamentos, recorrentes, dívidas, metas, orçamentos, regras, anexos) com restauração, e lembrete automático de backup a cada 30 dias.
+
+7. QUALIDADE E USABILIDADE
+
+Tema claro/escuro.
+Modo privacidade: botão de olho que oculta todos os valores (persistir a preferência).
+Confirmação antes de excluir; lixeira com restauração por 30 dias.
+Lançamento rápido pelo dashboard (valor + descrição + categoria em 3 toques).
+Atalhos de teclado no desktop e gestos de deslizar no celular (marcar pago / excluir).
+Notificações locais (PWA) de vencimentos no dia anterior.
+Tela de configurações: moeda, primeiro dia do mês financeiro (ex.: começar o mês no dia 5, dia do salário), categorias, regras, backup.
+Código organizado em módulos, com comentários, e dados de exemplo opcionais para testar.
