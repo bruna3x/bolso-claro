@@ -1,6 +1,6 @@
 # Bolso Claro — plano de simplificação
 
-Status: **aprovado em 24/10/2026.** As 7 decisões da seção 6 seguem abertas; nenhuma fase que dependa delas começa sem resposta.
+Status: **aprovado em 24/10/2026.** As 7 decisões da seção 6 foram respondidas em 24/10/2026 (ver tabela).
 Base: commit `5f32ca2` deste repositório + HTML e JS do app publicado em `bolsocal-f6mmdgnc.manus.space`, conferidos em 24/10/2026.
 
 ---
@@ -365,13 +365,13 @@ Cada item indica a fase que ele bloqueia. A recomendação é só proposta: não
 
 | # | Decisão | Bloqueia | Recomendação | Resposta |
 |---|---|---|---|---|
-| 1 | Definição de "pode gastar" | F4 | (A) orçamento | — |
-| 2 | Onde fica o dinheiro das metas | F1 (B2a), F3 | depende do uso | — |
-| 3 | Hospedagem nova | F0 | Cloudflare Pages | — |
-| 4 | Dia de início do mês | F4 | — | — |
-| 5 | Android ou iPhone | F1 (instruções de exportação) | — | — |
-| 6 | Reembolsos e comprovantes nos dados reais | F3 | arquivar, invisível na v1 | — |
-| 7 | Botões de editar/excluir meta aparecem no app instalado | F1 | — | — |
+| 1 | Definição de "pode gastar" | F4 | (A) orçamento | **(A) Orçamento** — soma dos limites − gasto nas categorias com limite. Fixos precisam ter limite na categoria. |
+| 2 | Onde fica o dinheiro das metas | F1 (B2a), F3 | depende do uso | **(a) Conta separada** — aporte = `transfer` conta → conta da meta (`goals.accountId` obrigatório). Saldo total não cai; "saiu" não muda. |
+| 3 | Hospedagem nova | F0 | Cloudflare Pages | **GitHub Pages** — repo é público; deploy via Actions. Se o repo virar privado, migra para Cloudflare Pages. |
+| 4 | Dia de início do mês | F4 | — | **Dia 1** — a configuração `monthStartDay` sai. B7 resolvido por remoção. |
+| 5 | Android ou iPhone | F1 (instruções de exportação) | — | **iPhone** — backup deve ser baixado de dentro do app instalado (IndexedDB separado do Safari). |
+| 6 | Reembolsos e comprovantes nos dados reais | F3 | arquivar, invisível na v1 | **Arquivar, invisível na v1** — pendências de reembolso viram `income` pendente; anexos ficam em `legacy`/`archive`. |
+| 7 | Botões de editar/excluir meta aparecem no app instalado | F1 | — | **Aparecem e o aporte funciona** — B1 e B2 fechados. F1 fica com B2a, B2b, B2c. |
 
 Detalhes de cada pergunta:
 
