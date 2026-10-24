@@ -1,6 +1,6 @@
 # Bolso Claro — plano de simplificação
 
-Status: **proposta para aprovação. Nenhum código foi alterado.**
+Status: **aprovado em 24/10/2026.** As 7 decisões da seção 6 seguem abertas; nenhuma fase que dependa delas começa sem resposta.
 Base: commit `5f32ca2` deste repositório + HTML e JS do app publicado em `bolsocal-f6mmdgnc.manus.space`, conferidos em 24/10/2026.
 
 ---
@@ -359,7 +359,21 @@ Cada fase termina com `pnpm build` verde, testes passando, deploy e o app usáve
 
 ---
 
-## 6. Perguntas para você
+## 6. Decisões pendentes
+
+Cada item indica a fase que ele bloqueia. A recomendação é só proposta: não vale como decisão até a resposta ser registrada aqui.
+
+| # | Decisão | Bloqueia | Recomendação | Resposta |
+|---|---|---|---|---|
+| 1 | Definição de "pode gastar" | F4 | (A) orçamento | — |
+| 2 | Onde fica o dinheiro das metas | F1 (B2a), F3 | depende do uso | — |
+| 3 | Hospedagem nova | F0 | Cloudflare Pages | — |
+| 4 | Dia de início do mês | F4 | — | — |
+| 5 | Android ou iPhone | F1 (instruções de exportação) | — | — |
+| 6 | Reembolsos e comprovantes nos dados reais | F3 | arquivar, invisível na v1 | — |
+| 7 | Botões de editar/excluir meta aparecem no app instalado | F1 | — | — |
+
+Detalhes de cada pergunta:
 
 1. **"Pode gastar até o fim do mês" significa o quê?**
    - **(A) Orçamento:** soma dos limites − gasto nas categorias com limite. *Recomendo*, porque usa o orçamento que você já quer manter e o ritmo diário sai natural. Exige que os fixos (aluguel etc.) tenham limite na categoria deles.
