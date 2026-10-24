@@ -63,7 +63,7 @@ O dashboard tem 19 blocos: banner, 4 stat cards, 3 cards de resumo, rosca, barra
 
 | # | Sintoma | Causa (arquivo:linha no upload plano) | Estado |
 |---|---|---|---|
-| B1 | Meta sem editar/excluir | Já implementado: `Views.tsx` (Goals) + `App.tsx` `onEditGoal`/`onDeleteGoal`. O bundle publicado contém "Editar meta" e "Excluir meta". | Corrigido no código. Se você não vê os botões, o app instalado está preso num service worker antigo. Ver pergunta 7. |
+| B1 | Meta sem editar/excluir | Já implementado: `Views.tsx` (Goals) + `App.tsx` `onEditGoal`/`onDeleteGoal`. O bundle publicado contém "Editar meta" e "Excluir meta". | Corrigido no código. Se você não vê os botões, o app instalado está preso num service worker antigo. Ver decisão 7. |
 | B2 | Aporte não acompanha a exclusão do lançamento | `goalBalanceCents` (`finance.ts:42`) deriva o saldo da meta dos lançamentos e ignora os excluídos: excluir o aporte zera, restaurar volta. | Corrigido no código. Restam 3 caminhos parecidos, B2a a B2c. |
 | B2a | O saldo total cai a cada aporte, mas "Saídas" não sobe | `accountBalances` debita `goalContribution` da conta de origem e não credita nenhuma (`finance.ts:86`), enquanto `monthTotals` só conta `expense` como saída. | Aberto |
 | B2b | Editar um aporte pode convertê-lo em despesa | O select "Tipo" do formulário (`FormModal.tsx:169`) não tem opção para aporte e mostra "Despesa". Mexer nele troca o `kind`, e o aporte some da meta. | Aberto |
@@ -72,7 +72,7 @@ O dashboard tem 19 blocos: banner, 4 stat cards, 3 cards de resumo, rosca, barra
 | B4 | "Saídas" conta conta que você ainda não pagou | `monthTotals` não filtra status (`finance.ts:100`). Como os recorrentes são gerados até o fim do mês, no dia 1 o aluguel já aparece como saída. | Aberto |
 | B5 | "Atrasado" quase nunca aparece | O status é gravado uma vez, na geração (`operations.ts:48`, `:58`). Um pendente que vence depois continua "Pendente" para sempre. | Aberto |
 | B6 | Mesmo padrão de B1 em outras entidades | Recorrente: só pausar. Dívida: só registrar parcela. Conta e cartão: só arquivar. Orçamento: sem excluir. | Aberto |
-| B7 | "Primeiro dia do mês" não faz nada | `monthStartDay` é salvo e nunca lido (`index.ts:55`). | Aberto |
+| B7 | "Primeiro dia do mês" não faz nada | `monthStartDay` é salvo e nunca lido (`index.ts:55`). | Resolvido por remoção (decisão 4): a configuração sai na F6. |
 | B8 | "Despesas líquidas" em Lançamentos soma transferências e ajustes | O resumo da lista trata tudo que não é `income` como despesa (`Views.tsx`, componente Transactions). | Aberto. Some com a tela nova. |
 
 ---
@@ -98,7 +98,7 @@ Legenda: **manter** · **fundir em X** · **cortar** (sai sem volta prevista) ·
 | "Quanto falta" e ritmo diário | **manter** | É a pergunta 3 do Início. |
 | Recorrentes (fixos) | **manter** | Mensal e anual no formulário (anual cobre IPVA e IPTU). Geração corrigida (B3). |
 | Dívidas | **fundir em Recorrentes** ("parcelado: N de M") | Concordo com você. Parcela fixa com fim é um recorrente com data final. Saem juros e amortização; o estado atual de cada dívida vira "faltam K parcelas". |
-| Metas | **manter**, simplificado | Nome, alvo, prazo opcional, acumulado e "R$ X/mês até o prazo". Saem tipo, prioridade, ícone, aporte automático e o simulador por meta. |
+| Metas | **manter**, simplificado | Nome, alvo, prazo opcional, conta onde o dinheiro fica, acumulado e "R$ X/mês até o prazo". Saem tipo, prioridade, ícone, aporte automático e o simulador por meta. |
 | Categorias | **manter** | Editar nome, cor e arquivar. |
 | Subcategorias | **cortar** | Na prática, a descrição já cumpre esse papel. O texto da subcategoria é anexado à descrição na migração. |
 | Import CSV/OFX | **manter** | O OFX já funciona e usa o mesmo diálogo, sem custo extra de interface. |
@@ -112,8 +112,8 @@ Legenda: **manter** · **fundir em X** · **cortar** (sai sem volta prevista) ·
 | Regras de categorização | **fundir no import** | Sem tela de regras. Ao importar, a categoria é sugerida pela última usada com a mesma descrição. Mesmo efeito, zero interface. |
 | Tags | **cortar** | Não aparecem em nenhum total. A busca por texto cobre o resto. |
 | Filtros salvos | **cortar** | Na tela nova, os filtros são mês, busca, categoria, conta e "a pagar". |
-| Divisão / reembolso / "A receber" | **v2** | Fluxo raro e com regras próprias de total. Pendências abertas viram lançamentos pendentes (pergunta 6). |
-| Comprovante anexado | **v2** | Incha o IndexedDB e o backup, que guarda o arquivo em base64. Os anexos existentes ficam guardados, não visíveis (pergunta 6). |
+| Divisão / reembolso / "A receber" | **v2** | Fluxo raro e com regras próprias de total. Pendências abertas viram lançamentos pendentes (decisão 6). |
+| Comprovante anexado | **v2** | Incha o IndexedDB e o backup, que guarda o arquivo em base64. Os anexos existentes ficam guardados, não visíveis (decisão 6). |
 | Snapshots de patrimônio | **cortar** | Dá para recalcular dos lançamentos se um dia voltar. |
 | Simulador "e se" e projeção de 12 meses | **v2** | "Pode gastar até o fim do mês" cobre o horizonte que você usa toda semana. |
 | Calendário | **cortar** | Concordo: duplica "a pagar" em Lançamentos. |
@@ -158,8 +158,8 @@ categories:   { id, name, kind: 'income' | 'expense', color, archived }
 budgets:      { categoryId (chave), amountCents }              // vale até mudar
 recurring:    { id, name, kind: 'income' | 'expense', amountCents, variable, categoryId, accountId,
                 frequency, dayOfMonth, startDate, endDate?, active, generatedThrough? }  // generatedThrough corrige B3
-goals:        { id, name, targetCents, deadline?, accountId?, archived, createdAt }
-settings:     { id: 'app', privacyMode, lastBackupAt?, monthStartDay, defaultAccountId? }
+goals:        { id, name, targetCents, deadline?, accountId, archived, createdAt }   // accountId obrigatório: conta onde o dinheiro da meta fica (decisão 2)
+settings:     { id: 'app', privacyMode, lastBackupAt?, defaultAccountId? }   // monthStartDay saiu (decisão 4: mês começa no dia 1)
 archive:      { id: '<tabela antiga>', rows: unknown[] }   // receivables, planned, rules, filters,
                                                           // snapshots, trash, debts originais, anexos
 ```
@@ -168,7 +168,7 @@ Regras derivadas:
 
 - **Saldo de conta:** saldo inicial + receitas − despesas ± transferências + ajustes, só com `paid`. Em conta-cartão, o resultado é a dívida do cartão.
 - **Fatura:** despesas da conta-cartão agrupadas por `invoiceMonth` − transferências recebidas naquele mês. O cálculo é o de hoje.
-- **Acumulado da meta:** soma dos lançamentos com `goalId`, entradas − saídas. Continua derivado, como hoje.
+- **Acumulado da meta:** soma dos lançamentos com `goalId`, entradas − saídas. Continua derivado, como hoje. Aporte novo é `transfer` da conta de origem para `goals.accountId`: o saldo total não cai e "saiu" não muda (decisão 2, fecha B2a).
 - **Recorrente:** gera ocorrências só a partir de `generatedThrough` e avança esse marcador. Excluir uma ocorrência não a ressuscita (B3).
 - **Entrou / saiu do mês:** soma de `income`/`expense` **pagos** no mês. Compras no cartão contam pela data da compra, como hoje e coerente com o orçamento. Pendentes viram uma linha à parte, "a pagar" (B4).
 
@@ -179,8 +179,8 @@ Regras derivadas:
 | `cards` | `accounts` com `type: 'card'` (mesmo `id`) |
 | tx com `cardId` | `accountId = cardId` |
 | `cardPayment` | `transfer` da conta pagadora → conta-cartão, mantendo `invoiceMonth` |
-| `reimbursement` | `income` na categoria Reembolso (pergunta 6) |
-| `goalContribution` / `goalWithdrawal` | `transfer` com `goalId`. Na migração fica **sem `toAccountId`**, para preservar exatamente o saldo de hoje (B2a). O comportamento dos aportes novos depende da pergunta 2. |
+| `reimbursement` | `income` na categoria Reembolso (decisão 6) |
+| `goalContribution` / `goalWithdrawal` | `transfer` com `goalId`. Na migração fica **sem `toAccountId`**, para preservar exatamente o saldo de hoje (B2a); o relatório de migração informa quantos aportes antigos ficaram sem conta de destino. Aportes novos seguem a decisão 2: `transfer` com `toAccountId = goals.accountId`. |
 | `status: 'overdue'` | `pending` |
 | `dueDate` de pendente | vira `date` |
 | `subcategory`, `tags`, `notes`, `paymentMethod`, `paidAt`, `attachment` | `legacy` dentro do próprio lançamento. A subcategoria também é anexada à descrição. |
@@ -314,7 +314,6 @@ Tocar numa categoria abre "editar limite" e lista os lançamentos dela no mês.
 │ Importar extrato (CSV/OFX)           │
 ├──────────────────────────────────────┤
 │ Ocultar valores                  [ ] │
-│ Mês começa no dia                [1] │
 └──────────────────────────────────────┘
 ```
 
@@ -349,19 +348,19 @@ Cada fase termina com `pnpm build` verde, testes passando, deploy e o app usáve
 
 | Fase | O que entra | Pronto quando |
 |---|---|---|
-| **F0. Repositório e hospedagem** | Recriar `src/`, remover o lixo do Manus, lockfile, `icon-512.png`, deps no lugar certo, Vitest. Deploy no host novo (pergunta 3) **sem mudar comportamento**. | O app novo abre igual ao antigo, sem nenhum script de terceiros no HTML, e aceita importar seu backup atual. |
-| **F1. Bugs no modelo atual + mudança de casa** | B3 (geração usa `generatedThrough`), B4 (saiu = só pago), B5 (atrasado calculado), B2b (aporte editado no formulário certo), B2a (comportamento conforme pergunta 2). Testes de domínio para saldos, faturas, recorrentes e metas. Verificação de B2c no seu backup. | Você exporta do manus.space, importa no host novo e passa a usar o novo. O antigo fica de reserva. |
+| **F0. Repositório e hospedagem** | Recriar `src/`, remover o lixo do Manus, lockfile, `icon-512.png`, deps no lugar certo, Vitest. Deploy no **GitHub Pages** via Actions (`.github/workflows/deploy.yml`; `base: '/bolso-claro/'` no Vite) **sem mudar comportamento** (decisão 3). | O app novo abre igual ao antigo, sem nenhum script de terceiros no HTML, e aceita importar seu backup atual. |
+| **F1. Bugs no modelo atual + mudança de casa** | B3 (geração usa `generatedThrough`), B4 (saiu = só pago), B5 (atrasado calculado), B2b (aporte editado no formulário certo), B2a (aporte vira transferência para a conta da meta, decisão 2). Testes de domínio para saldos, faturas, recorrentes e metas. Verificação de B2c no seu backup. | Você exporta do manus.space (no iPhone, de dentro do app instalado, decisão 5), importa no GitHub Pages e passa a usar o novo. O antigo fica de reserva. |
 | **F2. Cortes de interface** | Saem as telas Calendário, Planejamento, Dívidas (só a tela), A receber, Regras, Lixeira (vira Desfazer), filtros salvos, PDF, notificações e os gráficos do Início. **Dados intocados.** | Menu com 4 itens e app mais leve, sem `jspdf`. Reverter é um `git revert`. |
 | **F3. Migração de dados v1 → v2** | `migrateV1toV2` + invariantes + relatório. Dexie v2, backup v2, restaurar aceita v1/v2. Telas restantes adaptadas ao modelo novo. Backup automático antes de migrar. | Seu backup real migra com todas as invariantes ✓ nos testes e no aparelho. |
 | **F4. Início + formulário rápido** | As 3 perguntas, ⚠ de orçamento, últimos lançamentos. Formulário em painel inferior com chips por frequência de uso. | Registrar gasto em menos de 10 s no celular, medido. |
 | **F5. Lançamentos + Orçamento + Metas** | Lista agrupada por dia com "A pagar" no topo e fatura como item. Orçamento fixo por categoria. Metas no Orçamento. Recorrentes com parcelas, que absorvem as dívidas. | Revisão semanal no desktop sem sair dessas duas telas. |
-| **F6. Ajustes + limpeza** | Contas e cartões unificados, categorias, dados, preferências. Sai o `recharts`. Teste de PWA offline com Playwright. Apagar os dados do app antigo. | Bundle principal bem menor que 846 KB, Lighthouse PWA ok, funciona em modo avião. |
+| **F6. Ajustes + limpeza** | Contas e cartões unificados, categorias, dados, preferências (sem "mês começa no dia"). Sai o `recharts`. Teste de PWA offline com Playwright. Apagar os dados do app antigo. | Bundle principal bem menor que 846 KB, Lighthouse PWA ok, funciona em modo avião. |
 
 ---
 
 ## 6. Decisões pendentes
 
-Cada item indica a fase que ele bloqueia. A recomendação é só proposta: não vale como decisão até a resposta ser registrada aqui.
+Cada item indica a fase que ele bloqueava. Todas respondidas em 24/10/2026; os ajustes decorrentes já estão aplicados nas seções 1.5, 2, 3, 4 e 5.
 
 | # | Decisão | Bloqueia | Recomendação | Resposta |
 |---|---|---|---|---|
@@ -373,7 +372,7 @@ Cada item indica a fase que ele bloqueia. A recomendação é só proposta: não
 | 6 | Reembolsos e comprovantes nos dados reais | F3 | arquivar, invisível na v1 | **Arquivar, invisível na v1** — pendências de reembolso viram `income` pendente; anexos ficam em `legacy`/`archive`. |
 | 7 | Botões de editar/excluir meta aparecem no app instalado | F1 | — | **Aparecem e o aporte funciona** — B1 e B2 fechados. F1 fica com B2a, B2b, B2c. |
 
-Detalhes de cada pergunta:
+Detalhes de cada pergunta (mantidos como histórico):
 
 1. **"Pode gastar até o fim do mês" significa o quê?**
    - **(A) Orçamento:** soma dos limites − gasto nas categorias com limite. *Recomendo*, porque usa o orçamento que você já quer manter e o ritmo diário sai natural. Exige que os fixos (aluguel etc.) tenham limite na categoria deles.
