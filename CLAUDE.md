@@ -16,7 +16,7 @@ O plano aprovado está em `PLANO.md`: auditoria, mapa de funcionalidades, modelo
 
 ## Estado atual do código
 
-- O repositório é um upload plano do projeto gerado pelo Manus. Os imports apontam para `src/db`, `src/domain`, `src/lib`, `src/components` e `src/features`, que ainda não existem, então **ainda não compila**. A F0 recria a árvore.
+- F0 concluída: árvore `src/` recriada, build com lockfile, Vitest (`src/**/*.test.ts`) e deploy no GitHub Pages em `/bolso-claro/` via `.github/workflows/deploy.yml`. O backup fictício de teste fica em `test/fixtures/backup-v1-teste.json`.
 - O código em produção ainda usa o **modelo v1**: Dexie versão 1, 16 tabelas, `Transaction` com 8 `kind`s (ver `types.ts` e `index.ts`). O modelo v2 abaixo só entra na F3.
 - Bugs conhecidos e abertos: B2a, B2b, B3, B4, B5, B6, B7 e B8, descritos na seção 1.5 do plano.
 
