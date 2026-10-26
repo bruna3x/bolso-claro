@@ -1,7 +1,7 @@
 import { db } from './index';
-import { occurrencesThrough } from '../domain/recurring';
+import { planObligations } from '../domain/recurring';
 import { accountBalances, buildInvoices, debtLedgerState, debtLedgerStateIncludingDeleted, netWorthCents } from '../domain/finance';
-import { addMonthsKey, monthKey, newId, safeDay, todayISO } from '../lib/format';
+import { addMonthsKey, monthKey, newId, todayISO } from '../lib/format';
 import type { Account, Goal, Receivable, Transaction, TrashItem } from '../types';
 
 export async function migrateLegacyLedgers(): Promise<void> {
@@ -35,34 +35,14 @@ export async function migrateLegacyLedgers(): Promise<void> {
 }
 
 export async function generateCurrentObligations(): Promise<void> {
-  const today = todayISO(); const now = new Date(); const month = monthKey(now);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toLocaleDateString('en-CA');
-  const [items, debts, entries, goals] = await Promise.all([db.recurring.toArray(), db.debts.toArray(), db.transactions.toArray(), db.goals.toArray()]);
-  const existing = new Set(entries.filter(t => !t.deletedAt && t.recurrenceId).map(t => `${t.recurrenceId}:${t.date}`));
-  const add: Transaction[] = [];
-  for (const item of items.filter(i => i.active)) {
-    for (const date of occurrencesThrough(item, monthEnd)) {
-      const key = `${item.id}:${date}`; if (existing.has(key)) continue;
-      add.push({ id: newId(), kind: item.kind, amountCents: item.amountCents, date, dueDate: date, categoryId: item.categoryId,
-        description: item.variable ? `${item.name} · confirmar valor` : item.name, accountId: item.accountId, cardId: item.cardId,
-        paymentMethod: item.paymentMethod, tags: [], status: date < today ? 'overdue' : 'pending', recurrenceId: item.id, createdAt: new Date().toISOString() });
-      existing.add(key);
-    }
-  }
-  for (const debt of debts.map(d => debtLedgerState(d, entries)).filter(d => d.active)) {
-    const dueDate = `${month}-${String(safeDay(debt.dueDay, now.getFullYear(), now.getMonth())).padStart(2, '0')}`;
-    const recurrenceId = `debt:${debt.id}`;
-    if (dueDate < today && dueDate.slice(0, 7) !== month) continue;
-    if (existing.has(`${recurrenceId}:${dueDate}`)) continue;
-    add.push({ id: newId(), kind: 'expense', amountCents: debt.installmentCents, date: dueDate, dueDate, categoryId: debt.categoryId,
-      description: `Parcela · ${debt.name}`, accountId: debt.accountId, paymentMethod: 'boleto', tags: ['dívida'], status: dueDate < today ? 'overdue' : 'pending', recurrenceId, relatedId: debt.id, createdAt: new Date().toISOString() });
-  }
-  for (const goal of goals.filter(g => !g.archived && g.automaticMonthlyCents && g.automaticMonthlyCents > 0)) {
-    const date = today; const recurrenceId = `goal:${goal.id}`;
-    if (entries.some(t => t.recurrenceId === recurrenceId && t.date.startsWith(month))) continue;
-    add.push({ id: newId(), kind: 'goalContribution', amountCents: goal.automaticMonthlyCents!, date, dueDate: date, description: `Aporte automático · ${goal.name}`, accountId: goal.accountId, relatedId: goal.id, tags: ['meta', 'aporte automático'], status: 'pending', recurrenceId, createdAt: new Date().toISOString() });
-  }
-  if (add.length) await db.transactions.bulkAdd(add);
+  await db.transaction('rw', [db.transactions, db.recurring, db.debts, db.goals, db.accounts], async () => {
+    const [recurring, debts, goals, accounts, transactions] = await Promise.all([db.recurring.toArray(), db.debts.toArray(), db.goals.toArray(), db.accounts.toArray(), db.transactions.toArray()]);
+    const plan = planObligations({ recurring, debts, goals, accounts, transactions });
+    if (plan.add.length) await db.transactions.bulkAdd(plan.add);
+    for (const [id, generatedThrough] of Object.entries(plan.recurringThrough)) await db.recurring.update(id, { generatedThrough });
+    for (const [id, generatedThrough] of Object.entries(plan.debtsThrough)) await db.debts.update(id, { generatedThrough });
+    for (const [id, generatedThrough] of Object.entries(plan.goalsThrough)) await db.goals.update(id, { generatedThrough });
+  });
   await createPreviousMonthSnapshot();
 }
 

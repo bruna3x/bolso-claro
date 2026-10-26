@@ -20,6 +20,8 @@ class FinanceDB extends Dexie {
   settings!: EntityTable<AppSettings, 'id'>;
   constructor() {
     super('BolsoClaro');
+    // `lastGeneratedFor` ficou no índice de `recurring` só porque mudar o esquema exige a versão 2 (F3).
+    // O campo saiu do tipo; o marcador de geração agora é `generatedThrough` (B3).
     this.version(1).stores({
       accounts: 'id,name,type,archived', cards: 'id,name,archived',
       transactions: 'id,date,kind,categoryId,accountId,cardId,status,recurrenceId,seriesId,deletedAt,[date+amountCents+description]',

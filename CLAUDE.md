@@ -18,7 +18,8 @@ O plano aprovado está em `PLANO.md`: auditoria, mapa de funcionalidades, modelo
 
 - F0 concluída: árvore `src/` recriada, build com lockfile, Vitest (`src/**/*.test.ts`) e deploy no GitHub Pages em `/bolso-claro/` via `.github/workflows/deploy.yml`. O backup fictício de teste fica em `test/fixtures/backup-v1-teste.json`.
 - O código em produção ainda usa o **modelo v1**: Dexie versão 1, 16 tabelas, `Transaction` com 8 `kind`s (ver `types.ts` e `index.ts`). O modelo v2 abaixo só entra na F3.
-- Bugs conhecidos e abertos: B2a, B2b, B3, B4, B5, B6, B7 e B8, descritos na seção 1.5 do plano.
+- F1 (código) concluída: B2a, B2b, B3, B4 e B5 corrigidos no modelo v1, sem mudar o esquema do Dexie. Regras novas em funções puras com teste: `planObligations` e `generatedThrough` (`domain/recurring.ts`), `monthTotals` só com pagos e `isOverdue` (`domain/finance.ts`), `buildGoalMovement`/`editFormFor` (`domain/goals.ts`). Aporte em meta com conta grava `goalAccountId` e vira transferência. `pnpm verifica-aportes <backup.json>` verifica B2c. Falta a mudança de casa (exportar do manus.space e importar no GitHub Pages), que é feita pela usuária.
+- Bugs conhecidos e abertos: B6, B7 e B8, descritos na seção 1.5 do plano.
 
 ## Modelo de dados alvo (v2, Dexie versão 2)
 

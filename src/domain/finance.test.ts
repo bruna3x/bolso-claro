@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import backup from '../../test/fixtures/backup-v1-teste.json';
 import type { Account, CreditCard, Transaction } from '../types';
-import { accountBalances, buildInvoices, goalBalanceCents, invoiceDueDate, invoiceMonthFor } from './finance';
+import { accountBalances, buildInvoices, goalBalanceCents, invoiceDueDate, invoiceMonthFor, isOverdue, monthTotals } from './finance';
 
 // Backup fictício (todas as descrições começam com "TESTE"), exportado pelo app v1 em 19/10/2026.
 const accounts = backup.data.accounts as Account[];
@@ -76,5 +76,75 @@ describe('goalBalanceCents', () => {
       tx('d', 'goalContribution', 99_000, { deletedAt: '2026-10-11T00:00:00Z' }),
       tx('e', 'goalContribution', 99_000, { relatedId: 'outra' }),
     ])).toBe(12_000);
+  });
+});
+
+describe('monthTotals (B4)', () => {
+  const tx = (id: string, kind: Transaction['kind'], amountCents: number, extra: Partial<Transaction> = {}): Transaction => ({ id, kind, amountCents, date: '2026-10-10', description: 'TESTE', accountId: principal, tags: [], status: 'paid', createdAt: '2026-10-10T00:00:00Z', ...extra });
+
+  it('no backup de teste, saiu = despesas pagas da conta + compras do cartão até hoje', () => {
+    // Parcelas da dívida (2 × 1.000), plano de saúde (530) e compras no cartão de outubro (200 + 100 + 100).
+    expect(monthTotals(transactions, '2026-10')).toEqual({ incomeCents: 0, expensesCents: 293_000, pendingCents: 0, pendingIncomeCents: 0, savedCents: 0 });
+  });
+  it('pendente não entra em "saiu" nem em "entrou": vira "a pagar" e "a receber"', () => {
+    const extra = [
+      tx('aluguel', 'expense', 150_000, { status: 'pending', date: '2026-10-28' }),
+      tx('luz', 'expense', 20_000, { status: 'overdue', date: '2026-10-05' }),
+      tx('salario', 'income', 500_000),
+      tx('freela', 'income', 80_000, { status: 'pending', date: '2026-10-30' }),
+    ];
+    const totals = monthTotals([...transactions, ...extra], '2026-10');
+    expect(totals.expensesCents).toBe(293_000);
+    expect(totals.pendingCents).toBe(170_000);
+    expect(totals.incomeCents).toBe(500_000);
+    expect(totals.pendingIncomeCents).toBe(80_000);
+  });
+  it('compra no cartão conta pela data da compra, e não antes dela', () => {
+    expect(monthTotals(transactions, '2026-12').expensesCents).toBe(0);
+    vi.setSystemTime(new Date(2026, 11, 5, 12));
+    expect(monthTotals(transactions, '2026-12').expensesCents).toBe(10_000);
+    expect(monthTotals(transactions, '2026-12').pendingCents).toBe(0);
+  });
+  it('aporte pago é "guardado", não "saiu"', () => {
+    const totals = monthTotals([tx('a', 'goalContribution', 30_000, { relatedId: 'meta' })], '2026-10');
+    expect([totals.expensesCents, totals.savedCents]).toEqual([0, 30_000]);
+  });
+});
+
+describe('isOverdue (B5)', () => {
+  const base = { date: '2026-10-20', dueDate: undefined as string | undefined };
+  it('é pendente com vencimento antes de hoje', () => {
+    expect(isOverdue({ ...base, status: 'pending' })).toBe(true);
+    expect(isOverdue({ ...base, status: 'pending', dueDate: '2026-10-30' })).toBe(false);
+    expect(isOverdue({ ...base, status: 'pending', date: '2026-10-24' })).toBe(false);
+  });
+  it('pago nunca está atrasado; "overdue" gravado por versões antigas é lido como pendente', () => {
+    expect(isOverdue({ ...base, status: 'paid' })).toBe(false);
+    expect(isOverdue({ ...base, status: 'overdue', date: '2026-10-30' })).toBe(false);
+    expect(isOverdue({ ...base, status: 'overdue' })).toBe(true);
+  });
+  it('vencido ontem vira atrasado sem regravar nada', () => {
+    const pending = { ...base, status: 'pending' as const, date: '2026-10-25' };
+    expect(isOverdue(pending)).toBe(false);
+    vi.setSystemTime(new Date(2026, 9, 26, 12));
+    expect(isOverdue(pending)).toBe(true);
+  });
+});
+
+describe('accountBalances com meta (B2a)', () => {
+  const total = (txs: Transaction[]) => Object.values(accountBalances(accounts, txs)).reduce((s, v) => s + v, 0);
+  const aporte = (extra: Partial<Transaction>): Transaction => ({ id: 'ap', kind: 'goalContribution', amountCents: 50_000, date: '2026-10-24', description: 'TESTE aporte', accountId: principal, relatedId: 'meta', tags: ['meta'], status: 'paid', paidAt: '2026-10-24', createdAt: '2026-10-24T00:00:00Z', ...extra });
+
+  it('aporte com conta da meta é transferência: o saldo total não muda', () => {
+    const after = accountBalances(accounts, [...transactions, aporte({ goalAccountId: poupanca })]);
+    expect(after).toEqual({ [principal]: 677_000, [poupanca]: 70_000 });
+    expect(total([...transactions, aporte({ goalAccountId: poupanca })])).toBe(total(transactions));
+  });
+  it('resgate com conta da meta faz o inverso', () => {
+    const resgate = aporte({ id: 'rs', kind: 'goalWithdrawal', amountCents: 5_000, goalAccountId: poupanca });
+    expect(accountBalances(accounts, [...transactions, resgate])).toEqual({ [principal]: 732_000, [poupanca]: 15_000 });
+  });
+  it('aporte sem conta da meta (dados antigos) mantém o comportamento anterior', () => {
+    expect(accountBalances(accounts, [...transactions, aporte({})])).toEqual({ [principal]: 677_000, [poupanca]: 20_000 });
   });
 });

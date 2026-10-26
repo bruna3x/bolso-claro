@@ -84,6 +84,9 @@ export function accountBalances(accounts: Account[], transactions: Transaction[]
     const amount = tx.amountCents;
     if ((tx.kind === 'income' || tx.kind === 'reimbursement') && tx.accountId) out[tx.accountId] = (out[tx.accountId] ?? 0) + amount;
     if ((tx.kind === 'expense' || tx.kind === 'goalContribution') && tx.accountId && !tx.cardId) out[tx.accountId] = (out[tx.accountId] ?? 0) - amount;
+    // Aporte/resgate em meta com conta própria é uma transferência: o saldo total não muda (decisão 2, B2a).
+    if (tx.kind === 'goalContribution' && tx.goalAccountId) out[tx.goalAccountId] = (out[tx.goalAccountId] ?? 0) + amount;
+    if (tx.kind === 'goalWithdrawal' && tx.goalAccountId) out[tx.goalAccountId] = (out[tx.goalAccountId] ?? 0) - amount;
     if (tx.kind === 'cardPayment' && tx.accountId) out[tx.accountId] = (out[tx.accountId] ?? 0) - amount;
     if (tx.kind === 'transfer') {
       if (tx.accountId) out[tx.accountId] = (out[tx.accountId] ?? 0) - amount;
@@ -94,18 +97,31 @@ export function accountBalances(accounts: Account[], transactions: Transaction[]
   }
   return out;
 }
-export function monthTotals(transactions: Transaction[], month: string, receivables: { originalTransactionId?: string; receivedCents: number }[] = []): { income: number; expenses: number; pending: number; saved: number } {
+export interface MonthTotals { incomeCents: number; expensesCents: number; pendingCents: number; pendingIncomeCents: number; savedCents: number }
+
+/** Pendente (ou "overdue" gravado por versões antigas) cujo vencimento já passou. Nunca é gravado. */
+export function isOverdue(tx: Pick<Transaction, 'status' | 'date' | 'dueDate'>, today = todayISO()): boolean {
+  return tx.status !== 'paid' && (tx.dueDate ?? tx.date).slice(0, 10) < today;
+}
+
+/**
+ * Entrou/saiu do mês contam só o que foi pago. Compra no cartão conta pela data da compra (já aconteceu),
+ * e o que ela custa a pagar aparece na fatura. Pendentes viram totais à parte: "a pagar" e "a receber".
+ */
+export function monthTotals(transactions: Transaction[], month: string, receivables: { originalTransactionId?: string; receivedCents: number }[] = [], today = todayISO()): MonthTotals {
   const selected = transactions.filter(tx => !tx.deletedAt && tx.date.slice(0, 7) === month);
-  const income = selected.filter(tx => tx.kind === 'income').reduce((s, tx) => s + tx.amountCents, 0);
-  const gross = selected.filter(tx => tx.kind === 'expense').reduce((s, tx) => s + tx.amountCents, 0);
-  const reimbursementOffset = receivables.reduce((sum, item) => {
-    const original = transactions.find(tx => tx.id === item.originalTransactionId);
-    return original?.kind === 'expense' && original.date.startsWith(month) ? sum + item.receivedCents : sum;
-  }, 0);
-  const expenses = Math.max(0, gross - reimbursementOffset);
-  const pending = selected.filter(tx => ['pending', 'overdue'].includes(tx.status) && ['expense', 'goalContribution'].includes(tx.kind) && !tx.cardId).reduce((s, tx) => s + tx.amountCents, 0);
-  const saved = selected.filter(tx => tx.kind === 'goalContribution' && tx.status === 'paid').reduce((s, tx) => s + tx.amountCents, 0);
-  return { income, expenses, pending, saved };
+  const settled = (tx: Transaction) => tx.cardId ? tx.date.slice(0, 10) <= today : tx.status === 'paid';
+  const sum = (items: Transaction[]) => items.reduce((s, tx) => s + tx.amountCents, 0);
+  const counted = selected.filter(tx => tx.kind === 'expense' && settled(tx));
+  const countedIds = new Set(counted.map(tx => tx.id));
+  const reimbursementOffset = receivables.reduce((total, item) => item.originalTransactionId && countedIds.has(item.originalTransactionId) ? total + item.receivedCents : total, 0);
+  return {
+    incomeCents: sum(selected.filter(tx => tx.kind === 'income' && tx.status === 'paid')),
+    expensesCents: Math.max(0, sum(counted) - reimbursementOffset),
+    pendingCents: sum(selected.filter(tx => tx.status !== 'paid' && (tx.kind === 'expense' || tx.kind === 'goalContribution') && !tx.cardId)),
+    pendingIncomeCents: sum(selected.filter(tx => tx.kind === 'income' && tx.status !== 'paid')),
+    savedCents: sum(selected.filter(tx => tx.kind === 'goalContribution' && tx.status === 'paid'))
+  };
 }
 export function expensesByCategory(transactions: Transaction[], month: string, categories: { id: string; name: string; color: string }[], receivables: { originalTransactionId?: string; amountCents: number; receivedCents: number; status: string }[]): { name: string; id: string; amount: number; color: string }[] {
   const totals = new Map<string, number>();
