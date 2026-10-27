@@ -1,8 +1,8 @@
 import { db } from './index';
 import { planObligations } from '../domain/recurring';
 import { accountBalances, buildInvoices, debtLedgerState, debtLedgerStateIncludingDeleted, netWorthCents } from '../domain/finance';
-import { addMonthsKey, monthKey, newId, todayISO } from '../lib/format';
-import type { Account, Goal, Receivable, Transaction, TrashItem } from '../types';
+import { addMonthsKey, monthKey, newId } from '../lib/format';
+import type { Account, Goal, Transaction, TrashItem } from '../types';
 
 export async function migrateLegacyLedgers(): Promise<void> {
   await db.transaction('rw', db.goalMovements, db.transactions, db.debts, async () => {
@@ -63,30 +63,24 @@ async function createPreviousMonthSnapshot(): Promise<void> {
   void start;
 }
 
-export async function settleReceivable(receivable: Receivable, amountCents: number, accountId: string): Promise<void> {
-  const value = Math.max(0, Math.min(amountCents, receivable.amountCents - receivable.receivedCents));
-  if (!value) return;
-  await db.transaction('rw', db.receivables, db.transactions, async () => {
-    const current = await db.receivables.get(receivable.id); if (!current) return;
-    const receivedCents = Math.min(current.amountCents, current.receivedCents + value);
-    await db.receivables.put({ ...current, receivedCents, status: receivedCents >= current.amountCents ? 'received' : 'partial', receivedAt: receivedCents >= current.amountCents ? todayISO() : current.receivedAt });
-    await db.transactions.add({ id: newId(), kind: 'reimbursement', amountCents: value, date: todayISO(), description: `Recebimento · ${current.person}`, accountId, tags: [], status: 'paid', paidAt: todayISO(), relatedId: current.id, createdAt: new Date().toISOString() });
-  });
-}
-
-export async function moveTransactionToTrash(transaction: Transaction): Promise<void> {
+/** Devolve o id do item da lixeira, usado pelo "Desfazer". */
+export async function moveTransactionToTrash(transaction: Transaction): Promise<string> {
   const deletedAt = new Date().toISOString();
+  const id = newId();
   await db.transaction('rw', db.transactions, db.trash, async () => {
     await db.transactions.update(transaction.id, { deletedAt });
-    await db.trash.add({ id: newId(), entity: 'transaction', entityId: transaction.id, deletedAt, data: transaction });
+    await db.trash.add({ id, entity: 'transaction', entityId: transaction.id, deletedAt, data: transaction });
   });
+  return id;
 }
-export async function moveGoalToTrash(goal: Goal): Promise<void> {
+/** Devolve o id do item da lixeira da meta (restaurá-lo traz a meta e os movimentos), ou undefined se a meta não existe. */
+export async function moveGoalToTrash(goal: Goal): Promise<string | undefined> {
   const deletedAt = new Date().toISOString();
-  await db.transaction('rw', db.goals, db.transactions, db.trash, async () => {
-    const current = await db.goals.get(goal.id); if (!current) return;
+  const id = newId();
+  const moved = await db.transaction('rw', db.goals, db.transactions, db.trash, async () => {
+    const current = await db.goals.get(goal.id); if (!current) return false;
     await db.goals.delete(goal.id);
-    await db.trash.add({ id: newId(), entity: 'goal', entityId: goal.id, deletedAt, data: current });
+    await db.trash.add({ id, entity: 'goal', entityId: goal.id, deletedAt, data: current });
     const linked = (await db.transactions.toArray()).filter(tx => tx.relatedId === goal.id && (tx.kind === 'goalContribution' || tx.kind === 'goalWithdrawal'));
     const trashed = await db.trash.where('entity').equals('transaction').toArray();
     for (const tx of linked) {
@@ -95,7 +89,9 @@ export async function moveGoalToTrash(goal: Goal): Promise<void> {
       else await db.trash.add({ id: newId(), entity: 'transaction', entityId: tx.id, deletedAt, data: { ...tx, deletedAt: undefined } });
       await db.transactions.update(tx.id, { deletedAt });
     }
+    return true;
   });
+  return moved ? id : undefined;
 }
 
 async function restoreGoalBundle(goalId: string, goalData: Goal, goalTrashId?: string): Promise<void> {

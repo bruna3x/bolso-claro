@@ -81,6 +81,8 @@ O dashboard tem 19 blocos: banner, 4 stat cards, 3 cards de resumo, rosca, barra
 
 Legenda: **manter** · **fundir em X** · **cortar** (sai sem volta prevista) · **v2** (sai agora, pode voltar). Nada é apagado dos dados: o que sai da interface vai para uma tabela `archive` (seção 3) e continua no backup.
 
+✅ **F2** marca o que já saiu da interface (dados intocados, modelo v1). ◐ marca saída parcial; o restante fica para a fase indicada.
+
 ### Núcleo
 
 | Funcionalidade | Decisão | Por quê |
@@ -97,7 +99,7 @@ Legenda: **manter** · **fundir em X** · **cortar** (sai sem volta prevista) ·
 | Orçamento por categoria | **manter**, como valor fixo que vale até você mudar | Acaba o ritual de "copiar mês anterior". Um orçamento por categoria, sem mês. |
 | "Quanto falta" e ritmo diário | **manter** | É a pergunta 3 do Início. |
 | Recorrentes (fixos) | **manter** | Mensal e anual no formulário (anual cobre IPVA e IPTU). Geração corrigida (B3). |
-| Dívidas | **fundir em Recorrentes** ("parcelado: N de M") | Concordo com você. Parcela fixa com fim é um recorrente com data final. Saem juros e amortização; o estado atual de cada dívida vira "faltam K parcelas". |
+| Dívidas | **fundir em Recorrentes** ("parcelado: N de M") | Concordo com você. Parcela fixa com fim é um recorrente com data final. Saem juros e amortização; o estado atual de cada dívida vira "faltam K parcelas". ◐ **F2:** a tela Dívidas saiu; dados, geração de parcelas e o pagamento pela lista continuam. A fusão em Recorrentes é F3/F5. |
 | Metas | **manter**, simplificado | Nome, alvo, prazo opcional, conta onde o dinheiro fica, acumulado e "R$ X/mês até o prazo". Saem tipo, prioridade, ícone, aporte automático e o simulador por meta. |
 | Categorias | **manter** | Editar nome, cor e arquivar. |
 | Subcategorias | **cortar** | Na prática, a descrição já cumpre esse papel. O texto da subcategoria é anexado à descrição na migração. |
@@ -109,28 +111,28 @@ Legenda: **manter** · **fundir em X** · **cortar** (sai sem volta prevista) ·
 
 | Funcionalidade | Decisão | Por quê |
 |---|---|---|
-| Regras de categorização | **fundir no import** | Sem tela de regras. Ao importar, a categoria é sugerida pela última usada com a mesma descrição. Mesmo efeito, zero interface. |
+| Regras de categorização | **fundir no import** | Sem tela de regras. Ao importar, a categoria é sugerida pela última usada com a mesma descrição. Mesmo efeito, zero interface. ◐ **F2:** a tela e o botão "criar regra" saíram. Regras já salvas continuam aplicadas no import até a F3. |
 | Tags | **cortar** | Não aparecem em nenhum total. A busca por texto cobre o resto. |
-| Filtros salvos | **cortar** | Na tela nova, os filtros são mês, busca, categoria, conta e "a pagar". |
-| Divisão / reembolso / "A receber" | **v2** | Fluxo raro e com regras próprias de total. Pendências abertas viram lançamentos pendentes (decisão 6). |
+| Filtros salvos | **cortar** | Na tela nova, os filtros são mês, busca, categoria, conta e "a pagar". ✅ **F2.** |
+| Divisão / reembolso / "A receber" | **v2** | Fluxo raro e com regras próprias de total. Pendências abertas viram lançamentos pendentes (decisão 6). ✅ **F2:** a tela, o "Recebi" e os campos de divisão/reembolso do formulário saíram. Os recebimentos já registrados continuam abatendo o gasto da categoria. |
 | Comprovante anexado | **v2** | Incha o IndexedDB e o backup, que guarda o arquivo em base64. Os anexos existentes ficam guardados, não visíveis (decisão 6). |
-| Snapshots de patrimônio | **cortar** | Dá para recalcular dos lançamentos se um dia voltar. |
-| Simulador "e se" e projeção de 12 meses | **v2** | "Pode gastar até o fim do mês" cobre o horizonte que você usa toda semana. |
-| Calendário | **cortar** | Concordo: duplica "a pagar" em Lançamentos. |
-| Lixeira de 30 dias | **fundir em "Desfazer"** | Discordo em parte. Excluir sem volta no celular é arriscado. Troco a lixeira por um aviso "Excluído · Desfazer" de alguns segundos, removo o deslizar-para-excluir e mantenho a confirmação para itens com parcelas. |
-| Forma de pagamento, médias 3/6m, "Leituras do mês" | **cortar** | O ⚠ de "categoria acima do limite" no Início substitui a única leitura que pede ação. |
-| Resumo em PDF | **cortar** | O CSV abre em qualquer planilha. Sai o `jspdf`. |
+| Snapshots de patrimônio | **cortar** | Dá para recalcular dos lançamentos se um dia voltar. ◐ **F2:** o gráfico de patrimônio saiu do Início. O snapshot mensal continua sendo gravado até a F3. |
+| Simulador "e se" e projeção de 12 meses | **v2** | "Pode gastar até o fim do mês" cobre o horizonte que você usa toda semana. ✅ **F2** (saíram com a tela Planejamento e com o Início). |
+| Calendário | **cortar** | Concordo: duplica "a pagar" em Lançamentos. ✅ **F2.** |
+| Lixeira de 30 dias | **fundir em "Desfazer"** | Discordo em parte. Excluir sem volta no celular é arriscado. Troco a lixeira por um aviso "Excluído · Desfazer" de alguns segundos, removo o deslizar-para-excluir e mantenho a confirmação para itens com parcelas. ✅ **F2:** a tela saiu. Excluir mostra "Excluído · Desfazer" por 6 s; o item vai para a lixeira na hora e o expurgo de 30 dias continua. Tocar no item abre a edição com Pagar e Excluir. A confirmação ficou só para item com parcelas. |
+| Forma de pagamento, médias 3/6m, "Leituras do mês" | **cortar** | O ⚠ de "categoria acima do limite" no Início substitui a única leitura que pede ação. ✅ **F2.** O Início mostra o orçamento por categoria com ⚠ quando passa do limite. |
+| Resumo em PDF | **cortar** | O CSV abre em qualquer planilha. Sai o `jspdf`. ✅ **F2**, com a dependência `jspdf`. |
 
 ### Que você não listou, mas eu cortaria
 
 | Funcionalidade | Decisão | Por quê |
 |---|---|---|
-| Gráficos (rosca, barras, tendência, patrimônio, projeção) | **cortar** (v2 para tendência) | A tela Orçamento já mostra gasto × limite por categoria. Os outros gráficos não respondem às 3 perguntas. Sai o `recharts`, que é a maior parte do bundle. |
-| Gastos planejados | **fundir em lançamento pendente** | "IPVA em março" é um lançamento pendente em março. |
-| Notificações | **cortar** | Só funcionam com o app aberto, e o próprio app avisa isso. |
-| Deslizar para pagar/excluir | **cortar** | Exclusão acidental. Tocar no item abre a edição, com Pagar e Excluir. |
-| Indicador online/offline | **cortar** | Os dados são locais, então ele não informa nada útil. |
-| Tema claro/escuro (configuração) | **fundir no sistema** | Segue o modo do celular. O CSS já existe. |
+| Gráficos (rosca, barras, tendência, patrimônio, projeção) | **cortar** (v2 para tendência) | A tela Orçamento já mostra gasto × limite por categoria. Os outros gráficos não respondem às 3 perguntas. Sai o `recharts`, que é a maior parte do bundle. ✅ **F2.** Nada mais importava `recharts`, então ele saiu já na F2 em vez da F6. |
+| Gastos planejados | **fundir em lançamento pendente** | "IPVA em março" é um lançamento pendente em março. ◐ **F2:** a tela e o formulário saíram. A conversão dos planejados em aberto é F3. |
+| Notificações | **cortar** | Só funcionam com o app aberto, e o próprio app avisa isso. ✅ **F2** (configuração, permissão e o efeito no App). |
+| Deslizar para pagar/excluir | **cortar** | Exclusão acidental. Tocar no item abre a edição, com Pagar e Excluir. ✅ **F2.** |
+| Indicador online/offline | **cortar** | Os dados são locais, então ele não informa nada útil. ✅ **F2.** |
+| Tema claro/escuro (configuração) | **fundir no sistema** | Segue o modo do celular. O CSS já existe. ✅ **F2:** segue `prefers-color-scheme`. O campo `settings.theme` continua gravado e é ignorado. |
 | Modo privacidade (olho) | **manter** | É um botão e um booleano, com uso típico em público. Custo quase zero. |
 | Ctrl+N no desktop | **manter** | Custo zero. |
 
@@ -350,7 +352,7 @@ Cada fase termina com `pnpm build` verde, testes passando, deploy e o app usáve
 |---|---|---|
 | **F0. Repositório e hospedagem** | Recriar `src/`, remover o lixo do Manus, lockfile, `icon-512.png`, deps no lugar certo, Vitest. Deploy no **GitHub Pages** via Actions (`.github/workflows/deploy.yml`; `base: '/bolso-claro/'` no Vite) **sem mudar comportamento** (decisão 3). | O app novo abre igual ao antigo, sem nenhum script de terceiros no HTML, e aceita importar seu backup atual. |
 | **F1. Bugs no modelo atual + mudança de casa** | B3 (geração usa `generatedThrough`), B4 (saiu = só pago), B5 (atrasado calculado), B2b (aporte editado no formulário certo), B2a (aporte vira transferência para a conta da meta, decisão 2). Testes de domínio para saldos, faturas, recorrentes e metas. Verificação de B2c no seu backup. | Você exporta do manus.space (no iPhone, de dentro do app instalado, decisão 5), importa no GitHub Pages e passa a usar o novo. O antigo fica de reserva. |
-| **F2. Cortes de interface** | Saem as telas Calendário, Planejamento, Dívidas (só a tela), A receber, Regras, Lixeira (vira Desfazer), filtros salvos, PDF, notificações e os gráficos do Início. **Dados intocados.** | Menu com 4 itens e app mais leve, sem `jspdf`. Reverter é um `git revert`. |
+| **F2. Cortes de interface** ✅ | Saem as telas Calendário, Planejamento, Dívidas (só a tela), A receber, Regras, Lixeira (vira Desfazer), filtros salvos, PDF, notificações e os gráficos do Início. **Dados intocados.** | Menu com 4 itens e app mais leve, sem `jspdf`. Reverter é um `git revert`. |
 | **F3. Migração de dados v1 → v2** | `migrateV1toV2` + invariantes + relatório. Dexie v2, backup v2, restaurar aceita v1/v2. Telas restantes adaptadas ao modelo novo. Backup automático antes de migrar. | Seu backup real migra com todas as invariantes ✓ nos testes e no aparelho. |
 | **F4. Início + formulário rápido** | As 3 perguntas, ⚠ de orçamento, últimos lançamentos. Formulário em painel inferior com chips por frequência de uso. | Registrar gasto em menos de 10 s no celular, medido. |
 | **F5. Lançamentos + Orçamento + Metas** | Lista agrupada por dia com "A pagar" no topo e fatura como item. Orçamento fixo por categoria. Metas no Orçamento. Recorrentes com parcelas, que absorvem as dívidas. | Revisão semanal no desktop sem sair dessas duas telas. |
