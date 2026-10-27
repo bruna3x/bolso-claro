@@ -373,6 +373,7 @@ Cada item indica a fase que ele bloqueava. Todas respondidas em 24/10/2026; os a
 | 5 | Android ou iPhone | F1 (instruções de exportação) | — | **iPhone** — backup deve ser baixado de dentro do app instalado (IndexedDB separado do Safari). |
 | 6 | Reembolsos e comprovantes nos dados reais | F3 | arquivar, invisível na v1 | **Arquivar, invisível na v1** — pendências de reembolso viram `income` pendente; anexos ficam em `legacy`/`archive`. |
 | 7 | Botões de editar/excluir meta aparecem no app instalado | F1 | — | **Aparecem e o aporte funciona** — B1 e B2 fechados. F1 fica com B2a, B2b, B2c. |
+| 8 | Revisão da F2: saldo total, Desfazer na meta e `fake-indexeddb` | F2 | — | Respondida em 27/10/2026. **Saldo total fica fora do Início**; os saldos por conta ficam só em Ajustes → Contas. Excluir meta usa o Desfazer, sem confirmação. `fake-indexeddb` fica como devDependency do teste de backup. |
 
 Detalhes de cada pergunta (mantidos como histórico):
 
